@@ -1,18 +1,21 @@
 """
 LangChain Agent Setup with Tools
 """
-import os
 import json
-from typing import List, Dict, Any
-from langchain_openai import ChatOpenAI
-from langchain.agents import create_openai_tools_agent, AgentExecutor
-from langchain.tools import tool
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import HumanMessage, AIMessage
-from dotenv import load_dotenv
+import os
+from pathlib import Path
+from typing import Any, Dict, List
 
-# Load environment variables
-load_dotenv()
+from dotenv import load_dotenv
+from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.tools import tool
+from langchain_core.messages import AIMessage, HumanMessage
+from langchain_openai import ChatOpenAI
+
+# Load .env from the project directory (same folder as this file), not only the process cwd
+_DOTENV_PATH = Path(__file__).resolve().parent / ".env"
+load_dotenv(_DOTENV_PATH)
 
 
 @tool
@@ -65,35 +68,30 @@ class AgentService:
     
     def __init__(self):
         """Initialize the agent with OpenAI model and tools"""
-      
-        
-        # Get API key from multiple sources (priority order):
-        # 1. Environment variable (OPENAI_API_KEY)
-        # 2. .env file (via load_dotenv)
+        # Load .env but do NOT override existing env vars — terminal export wins.
+        # load_dotenv(_DOTENV_PATH, override=False)
+
+        # Priority order:
+        # 1. .env (loaded above with override=True into OPENAI_API_KEY)
+        # 2. Existing environment variable OPENAI_API_KEY
         # 3. config.json file
-        # 4. Fallback to hardcoded key
         api_key = os.getenv("OPENAI_API_KEY")
-        
-        # Fallback 1: Try loading from .env again
-        if not api_key:
-            load_dotenv(override=True)
-            api_key = os.getenv("OPENAI_API_KEY")
-        
-        # Fallback 2: Try loading from config.json
+
+        # Fallback: Try loading from config.json
         if not api_key:
             config_path = os.path.join(os.path.dirname(__file__), "config.json")
             if os.path.exists(config_path):
                 try:
-                    with open(config_path, 'r') as f:
+                    with open(config_path, "r", encoding="utf-8") as f:
                         config = json.load(f)
                         api_key = config.get("openai_api_key")
                 except Exception:
                     pass
-        
+
         # Final check - ensure we have a valid API key
         if not api_key or api_key.strip() == "":
-            raise ValueError("OPENAI_API_KEY not found in environment variables, .env file, config.json, or fallback")
-        
+            raise ValueError("OPENAI_API_KEY not found in .env, environment variables, or config.json")
+
         # Initialize the LLM
         self.llm = ChatOpenAI(
             model="gpt-4o-mini",

@@ -49,6 +49,7 @@ pip install -r requirements.txt
 2. Edit `.env` and add your OpenAI API key:
    ```
    OPENAI_API_KEY=your_actual_api_key_here
+   APP_API_KEY=your_app_api_key_here
    ```
 
 ### 3. Run the Application
@@ -66,11 +67,18 @@ The API will be available at `http://localhost:8000`
 
 ## API Endpoints
 
-### Health Check
+### Health Check (public)
 - **GET** `/` or `/health` - Check if the API is running
 
-### Chat with Agent
+### Protected Endpoints (require `X-API-Key` header)
 - **POST** `/chat` - Interact with the agent
+- **/items** CRUD routes
+- **/categories** CRUD routes
+
+Example protected header:
+```http
+X-API-Key: your_app_api_key_here
+```
 
 **Request Body:**
 ```json
@@ -95,6 +103,7 @@ The API will be available at `http://localhost:8000`
 
 ```bash
 curl -X POST "http://localhost:8000/chat" \
+  -H "X-API-Key: your_app_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{"message": "What is 25 * 4?"}'
 ```
