@@ -2,6 +2,9 @@
 .env
 config.json
 
+# Local SQLite database
+*.db
+
 # Python
 __pycache__/
 *.py[cod]
